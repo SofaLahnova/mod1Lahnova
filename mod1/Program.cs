@@ -5,8 +5,82 @@ using System.Linq;
 
 namespace WebM1
 {
+
     class Program
     {
+        static void AdoNetDemo()
+        {
+            var connection = new SqlConnection(@"Server=.\SQLEXPRESS;Database=Phone;Trusted_Connection=True;");
+            connection.Open();
+            /////////
+            Console.WriteLine("3 самые дорогие модели: ");
+
+            var command = connection.CreateCommand();
+            command.CommandText = "SELECT TOP (3) m.Name, m.Price, mn.Name_M from Models m join Manufs mn ON m.ManufId = mn.Id Order by m.Price DESC";
+            var reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                Console.WriteLine($"Name= {reader.GetString(reader.GetOrdinal("Name"))}, Price = {reader.GetDouble(1)}, Name_M = {reader.GetString(reader.GetOrdinal("Name_M"))} ");
+            }
+            reader.Close();
+            //////////////////////////////
+            Console.WriteLine("производитель+ средняя цена моделей с  bluetooth: ");
+            command = connection.CreateCommand();
+            command.CommandText = "SELECT  mn.Name_M, AVG(m.Price) as avg_price from Models m join Manufs mn ON m.ManufId = mn.Id WHERE m.Bluetooth = 1 Group by mn.Name_M";
+
+            reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                Console.WriteLine($"Name_M = {reader.GetString(reader.GetOrdinal("Name_M"))}, avgPrice = {reader.GetDouble(1)} ");
+            }
+            reader.Close();
+            ////////////////////////////////
+            Console.WriteLine("производитель + нижняя цена линейки +  верхняя цена: ");
+
+            command = connection.CreateCommand();
+            command.CommandText = "SELECT   mn.Name_M, Min(m.Price) as min_price, Max(m.Price) as max_price from Models m join Manufs mn ON m.ManufId = mn.Id Group by mn.Name_M";
+            reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                Console.WriteLine($"Name_M = {reader.GetString(reader.GetOrdinal("Name_M"))}, minPrice = {reader.GetDouble(1)}, maxPrice = {reader.GetDouble(2)} ");
+            }
+            reader.Close();
+            ///////////////////////////////
+            Console.WriteLine("Год выпуска + средняя цена + кол-во моделей с bluetooth");
+
+            command = connection.CreateCommand();
+            command.CommandText = "SELECT   m.Year, AVG(m.Price) as avg_price,  (select count(m1.Bluetooth) from Models m1 where m1.Bluetooth = 1 AND m1.Year = m.Year) as count_b from Models m Group by m.Year ";
+            reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                Console.WriteLine($"Year =  {reader.GetInt32(0)}, avgPrice = {reader.GetDouble(1)}, countB = {reader.GetInt16(2)} ");
+            }
+            reader.Close();
+            //////////////////////////////
+            Console.WriteLine("Уценить самую дорогую модель на 10%");
+            command = connection.CreateCommand();
+            command.CommandText = "DECLARE @maxPr INT SELECT @maxPr = MAX (Price) from [dbo].[Models] UPDATE[dbo].[Models] SET Price = Price - 0.1 * Price where Price = @maxPr";
+            reader = command.ExecuteReader();
+           
+            reader.Close();
+            /////////////////////////////////
+            Console.WriteLine("Добавить модель производителю с самым дешёвым телефоном");
+            command = connection.CreateCommand();
+            command.CommandText = "DECLARE @minPr INT SELECT @minPr = MAX (Price)  from [dbo].[Models] DECLARE @minM INT SELECT @minM = ManufId  from[dbo].[Models] where Price = @minPr Insert into[dbo].[Models] values ('newM', 2022, 10000, 1, @minM)";
+            reader = command.ExecuteReader();
+            
+
+            reader.Close();
+            /////////////////////////////////////
+            Console.WriteLine("Удалить модели дешевле среднего");
+            command = connection.CreateCommand();
+            command.CommandText = $"DECLARE @avgPr INT SELECT @avgPr = AVG (Price)  from [dbo].[Models] DELETE[dbo].[Models] where Price<@avgPr";
+            reader = command.ExecuteReader();
+            reader.Close();
+
+            connection.Close();
+        }
+
         
         static void MaxPrice3(CContext db)
         {
@@ -126,26 +200,27 @@ namespace WebM1
             db.Models.AddRange(tom, bob, alice, kate, tomas, tomek, rare, tate, babe);
             db.SaveChanges();
 
-            Console.WriteLine("3 самые дорогие модели: ");
-            MaxPrice3(db);
-            Console.WriteLine();
-            Console.WriteLine("производитель+ средняя цена иоделей с  bluetooth: ");
-            MunMed(db);
-            Console.WriteLine();
-            Console.WriteLine("производитель + нижняя цена линейки +  верхняя цена: ");
-            MunPr(db);
-            Console.WriteLine();
-            Console.WriteLine("Год выпуска + средняя цена + кол-во моделей с bluetooth");
-            YePr(db);
-            Console.WriteLine();
-            Console.WriteLine("Уценить самую дорогую модель на 10%");
-            MaxPr(db);
-            Console.WriteLine();
-            Console.WriteLine("Добавить модель производителю с самым дешёвым телефоном");
-            MinPr(db);
-            Console.WriteLine();
-            Console.WriteLine("Удалить модели дешевле среднего");
-            DelMin(db);
+            //AdoNetDemo();
+            //Console.WriteLine("3 самые дорогие модели: ");
+            //MaxPrice3(db);
+            //Console.WriteLine();
+            //Console.WriteLine("производитель+ средняя цена иоделей с  bluetooth: ");
+            //MunMed(db);
+            //Console.WriteLine();
+            //Console.WriteLine("производитель + нижняя цена линейки +  верхняя цена: ");
+            //MunPr(db);
+            //Console.WriteLine();
+            //Console.WriteLine("Год выпуска + средняя цена + кол-во моделей с bluetooth");
+            //YePr(db);
+            //Console.WriteLine();
+            //Console.WriteLine("Уценить самую дорогую модель на 10%");
+            //MaxPr(db);
+            //Console.WriteLine();
+            //Console.WriteLine("Добавить модель производителю с самым дешёвым телефоном");
+            //MinPr(db);
+            //Console.WriteLine();
+            //Console.WriteLine("Удалить модели дешевле среднего");
+            //DelMin(db);
         }
 
         

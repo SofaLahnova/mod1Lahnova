@@ -38,6 +38,7 @@ namespace mod1.bd
     public class Model
     {
         [Key]
+        public int Id { get; set; }
         [MaxLength(10)]
         public string Name { get; set; }
         public int Year { get; set; }
